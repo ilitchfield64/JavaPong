@@ -1,4 +1,9 @@
 
 nbproject/private/private.xml
 nbproject/private/private.properties
-build/built-jar.properties
+build/*
+*.class
+*.jar
+build/classes/javaPong/JavaPong.class
+build/classes/javaPong/JavaPong.class
+*.class

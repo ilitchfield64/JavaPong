@@ -58,17 +58,20 @@ public class JavaPong extends JPanel implements KeyListener, MouseListener, Mous
     int moveSpeed = 4;
     int ballVelocity = 0;
     // How movement will be handled
-    boolean playerUp = false, playerDown = false, playerLeft = false, playerRight = false;
+    boolean pladdleUp = false, paddleDown = false, paddleLeft = false, paddleRight = false;
     boolean otherUp = false, otherDown = false, otherLeft = false, otherRight = false;
+    
     boolean ballServed = false; // is the ball moving?
-    boolean ballHorizontalDirection = false; // false will send ball to the left, true will to the right
-    boolean ballIsMovingVertical = false; // Is the ball moving vertically
+    boolean ballLeft = false; 
+    boolean ballRight = false;
+    boolean ballUp = false;
+    boolean ballDown = false;
     boolean ballVerticalDirection = false; //false will send the ball up, true will send the ball down
     // Objects
-    Rectangle playerPaddle;
+    Paddle player1;
     Rectangle otherPaddle;
     Rectangle defaultBall;
-    Rectangle ball;
+    Ball ball;
     
     // Clock
     Clock updateClock = Clock.systemDefaultZone();
@@ -85,38 +88,35 @@ public class JavaPong extends JPanel implements KeyListener, MouseListener, Mous
         addMouseMotionListener(this);
         addKeyListener(this);
         // Creates the objects
-        playerPaddle = new Rectangle(SCREEN_WIDTH / 16,(SCREEN_HEIGHT/2)- (SCREEN_HEIGHT/8),SCREEN_WIDTH/28,SCREEN_HEIGHT/ 6);
+        player1 = new Paddle(SCREEN_WIDTH / 16,(SCREEN_HEIGHT/2)- (SCREEN_HEIGHT/8),SCREEN_WIDTH/28,SCREEN_HEIGHT/ 6);
         otherPaddle = new Rectangle(SCREEN_WIDTH-(SCREEN_WIDTH / 10),(SCREEN_HEIGHT/2)- (SCREEN_HEIGHT/8),SCREEN_WIDTH/28,SCREEN_HEIGHT/ 6);
         defaultBall = new Rectangle(SCREEN_WIDTH/2, SCREEN_HEIGHT/2,SCREEN_WIDTH/48,SCREEN_WIDTH/48);
-        ball = new Rectangle(SCREEN_WIDTH/2, SCREEN_HEIGHT/2,SCREEN_WIDTH/48,SCREEN_WIDTH/48);
-        // Serves the ball in a Random Direction at runtime
-        if(Gen.nextInt(11) <= 5){
-            ballHorizontalDirection = true;
-        }
-        
+        ball = new Ball(SCREEN_WIDTH/2, SCREEN_HEIGHT/2,SCREEN_WIDTH/48,SCREEN_WIDTH/48, 0);
+
     }
     
 // Movement of objects
     //Paddle Movement
-        public void playerMovement() { // This method will handle movement speed
 
-        if (playerLeft) { // This moves player left
+        public void paddleMove() { // This method will handle movement speed
+
+        if (paddleLeft) { // This moves player left
             // System.out.println("Left");
-            playerPaddle.x = playerPaddle.x - moveSpeed;
+            player1.x = player1.x - moveSpeed;
         }
-        if (playerRight) { // This moves player right
+        if (paddleRight) { // This moves player right
             //  System.out.println("Right");
-            playerPaddle.x = playerPaddle.x + moveSpeed;
+            player1.x = player1.x + moveSpeed;
 
         }
         
-        if (playerUp) { // This moves player left
+        if (pladdleUp) { // This moves player left
             // System.out.println("Left");
-            playerPaddle.y = playerPaddle.y - moveSpeed;
+            player1.y = player1.y - moveSpeed;
         }
-        if (playerDown) { // This moves player right
+        if (paddleDown) { // This moves player right
             //  System.out.println("Right");
-            playerPaddle.y = playerPaddle.y + moveSpeed;
+            player1.y = player1.y + moveSpeed;
 
         }
         //player.x += playerX;
@@ -146,37 +146,16 @@ public class JavaPong extends JPanel implements KeyListener, MouseListener, Mous
         }
 
     }
-    
-// Ball Methods
-    public void ballMove(){
-        if(!ballServed && ballVelocity==0){
-            ballVelocity=4;
-            if(ballHorizontalDirection){ // ball will move right
-                
-                ball.x += ballVelocity;
-            }else if (!ballHorizontalDirection){ // ball will move left
-               
-                ball.x -= ballVelocity;
-            }
-        
-        }
-        if (ballServed) {
-            if(ballHorizontalDirection){ // ball will move right
-                
-                ball.x += ballVelocity;
-            }else if (!ballHorizontalDirection){ // ball will move left
-               
-                ball.x -= ballVelocity;
-            }
-        }
-    }
+
     // Will decide velocity of the ball
     public int ballSpeed(){
         return(0);
     }
     // Will decide direction and speed based on impact coords
-    public void ballHitPaddle(){
-        
+    public void ballHitPaddle(Rectangle paddle){
+        if(ball.intersects(paddle)){
+            
+        }
     }
     // Will decide @ what speed and angle the ball should bounce off a wall
     public void ballHitWall(){
@@ -186,14 +165,16 @@ public class JavaPong extends JPanel implements KeyListener, MouseListener, Mous
     public void ballOut(){
        if (ball.x < -25 ){
            ++player2Score;
-           ballHorizontalDirection = false;
+           ballRight = false;
+           ballLeft=true;
            ballServed=false;
            ball.x = defaultBall.x;
            ball.y = defaultBall.y;
        }
        if (ball.x > (SCREEN_WIDTH+25)){
            ++player1Score;
-           ballHorizontalDirection = true;
+           ballLeft= false;
+           ballRight = true;
            ballServed = false;
            ball.x = defaultBall.x;
            ball.y = defaultBall.y;
@@ -201,7 +182,7 @@ public class JavaPong extends JPanel implements KeyListener, MouseListener, Mous
     }
     
     // Prevents the objects from moving vertically off the screen
-    public void Boarders(Rectangle b) {
+    public void Borders(Rectangle b) {
 
         if (b.y <= 0) {
             b.y += moveSpeed;
@@ -228,12 +209,12 @@ public class JavaPong extends JPanel implements KeyListener, MouseListener, Mous
     
     // Updates locations of the objects
     public void update(){
-        playerMovement();
-        Boarders(playerPaddle);
+        paddleMove();
+        Borders(player1);
         otherPaddleMovement();
-        Boarders(otherPaddle);
-        ballMove();
-        Boarders(ball);
+        Borders(otherPaddle);
+        ball.ballMove(ballVelocity,ballServed);
+        Borders(ball);
         ballOut();
     }
         public void paint(Graphics g) {
@@ -241,7 +222,7 @@ public class JavaPong extends JPanel implements KeyListener, MouseListener, Mous
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         g.setColor(Color.WHITE);
-        g.fillRect(playerPaddle.x, playerPaddle.y, playerPaddle.width, playerPaddle.height);
+        g.fillRect(player1.x, player1.y, player1.width, player1.height);
         g.fillRect(otherPaddle.x, otherPaddle.y, otherPaddle.width,otherPaddle.height);
         g.fillRect(ball.x, ball.y, ball.width, ball.height);
         
@@ -274,10 +255,10 @@ public class JavaPong extends JPanel implements KeyListener, MouseListener, Mous
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
                 switch (e.getKeyCode()){
             case KeyEvent.VK_W:
-                playerUp = true;
+                pladdleUp = true;
                 break;
             case KeyEvent.VK_S:
-                playerDown = true;
+                paddleDown = true;
                 break;
             
             case KeyEvent.VK_UP:
@@ -299,10 +280,10 @@ public class JavaPong extends JPanel implements KeyListener, MouseListener, Mous
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
                 switch (e.getKeyCode()){
             case KeyEvent.VK_W:
-                playerUp = false;
+                pladdleUp = false;
                 break;
             case KeyEvent.VK_S:
-                playerDown = false;
+                paddleDown = false;
                 break;
            
             case KeyEvent.VK_UP:
